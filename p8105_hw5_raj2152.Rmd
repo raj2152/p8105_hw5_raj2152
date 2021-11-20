@@ -202,3 +202,41 @@ spaghetti_plot
 
 The results of subjects in the experimental group appear to increase over the weeks, while the results of subjects in the control group do not show any observable trends. The results of the experimental group also appear to be higher than the control group.  
 
+
+## Problem 3
+
+Load the `iris` dataset.
+```{r}
+library(tidyverse)
+
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species)) %>% 
+  janitor::clean_names()
+```
+
+Write a function:
+```{r}
+fill_in_missing = function(vector) {
+  
+  if (is.numeric(vector)) {
+    vector = ifelse(is.na(vector), mean(vector, na.rm = TRUE), vector)
+  }
+  
+  if (is.character(vector)) {
+    vector = ifelse(is.na(vector), "virginica", vector)
+  }
+  return(vector)
+}
+```
+
+Map across columns and apply function to each column, display some of the new dataframe:
+```{r, warning = FALSE}
+iris_without_missing =
+  map_df(iris_with_missing, fill_in_missing) %>% 
+  as.tibble()
+
+iris_without_missing %>% head(25)
+```
