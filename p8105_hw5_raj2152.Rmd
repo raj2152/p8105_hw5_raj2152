@@ -141,3 +141,64 @@ homicide_df %>%
 ```
 
 
+## Problem 2
+
+Start with a dataframe containing all file names using `list.files` function
+```{r}
+all_file_names =
+  tibble(
+  files = list.files("./data/zip_data/")
+  )
+```
+
+Iterate over file names and read in data for each subject using `purrr::map` and saving the result as a new variable in the dataframe
+```{r, results = 'hide'}
+import_function = function(file_name){
+  
+  csv_path = str_c("./data/zip_data/", file_name)
+  
+  read_csv(csv_path)
+}
+```
+
+Iterate across all files
+```{r, message = FALSE}
+all_data_df =
+  all_file_names %>% 
+  mutate(
+    results = map(files, import_function)
+  ) %>% 
+  unnest(results)
+```
+
+Tidy the data
+```{r}
+tidy_data =
+  all_data_df %>% 
+  separate(files, into = c("arm", "subject_id", sep = 3)) %>% 
+  select(-3) %>% 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "results"
+  ) %>% 
+  mutate(
+    subject_id = as.numeric(subject_id),
+    subject_id_new = ifelse(arm == "exp", subject_id + 10, subject_id)
+  )
+```
+
+Make a spaghetti plot
+```{r}
+spaghetti_plot = 
+  tidy_data %>% 
+  ggplot(aes(x = week, y = results, group = subject_id_new, color = arm)) +
+  geom_line() +
+  scale_color_brewer(palette = "Set1") 
+
+spaghetti_plot
+```
+
+The results of subjects in the experimental group appear to increase over the weeks, while the results of subjects in the control group do not show any observable trends. The results of the experimental group also appear to be higher than the control group.  
+
